@@ -14,6 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 @Entity
 @Table(name = "bank_accounts")
 @Getter
@@ -26,28 +29,33 @@ public class BankAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false, unique = true)
-    private long id;
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
-    private String number;
+    @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "number", nullable = false)
+    private String number;
+    
+    @Column(name = "bvn", nullable = false, unique = true)
     private String bvn;
 
-    @OneToOne(fetch = FetchType.LAZY) //No cascade: cascade = CascadeType.ALL
-    @JoinColumn(name = "bank_id")
+    @OneToOne(fetch = FetchType.LAZY, optional = false) //No cascade: cascade = CascadeType.ALL
+    @JoinColumn(name = "bank_id", nullable = false, updatable = false)
     private Bank bank;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(nullable = false, updatable = false)
+    private OffsetDateTime updatedAt;
 
 
 }

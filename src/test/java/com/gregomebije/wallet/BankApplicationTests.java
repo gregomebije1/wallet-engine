@@ -10,7 +10,6 @@ import com.gregomebije.wallet.service.ledger.LedgerClient;
 import com.gregomebije.wallet.service.notification.NotificationPublisher;
 import com.gregomebije.wallet.service.notification.RetryQueue;
 import com.gregomebije.wallet.service.history.ActivityLedgerClient;
-import com.gregomebije.wallet.service.history.UserMetadataRepository;
 import com.gregomebije.wallet.service.compliance.DailyVolumeRepository;
 import com.gregomebije.wallet.service.idempotency.DistributedLockService;
 import com.gregomebije.wallet.service.ledger.LedgerService;
@@ -27,8 +26,7 @@ class BankApplicationTests {
     @MockitoBean private LedgerService ledgerService;
     @MockitoBean private UtilityProviderClient utilityProviderClient; //require an actual live internet connection
     @MockitoBean private ActivityLedgerClient activityLedgerClient;
-    @MockitoBean private UserMetadataRepository userMetadataRepository;
-    @MockitoBean private DailyVolumeRepository dailyVolumeRepository;
+     @MockitoBean private DailyVolumeRepository dailyVolumeRepository;
     @MockitoBean private DistributedLockService distributedLockService;
 
     @Test

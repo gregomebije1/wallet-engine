@@ -1,18 +1,13 @@
 package com.gregomebije.wallet.model;
 
-import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "banks")
@@ -26,17 +21,20 @@ public class Bank {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false, unique = true)
-    private long id;
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
+
+    @Column(name = "code", nullable = false, unique = true)
     private String code;
 
-     @CreationTimestamp
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(nullable = false, updatable = false)
+    private OffsetDateTime updatedAt;
 }

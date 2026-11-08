@@ -5,7 +5,6 @@ import com.gregomebije.wallet.model.Models.WalletAccountResponse;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 
-
 @Service
 public class WalletAccountService {
     public WalletAccountResponse provision(WalletAccountRequest r) {

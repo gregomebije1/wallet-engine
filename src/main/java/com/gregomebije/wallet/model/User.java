@@ -14,6 +14,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+import java.time.OffsetDateTime;
+
+import com.gregomebije.wallet.model.Models.*;
+
 
 @Entity
 @Table(name = "users")
@@ -25,26 +30,39 @@ import lombok.Setter;
 
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, unique = true)
-    private long id;
+    private UUID id;
+
+    @Column(nullable = false, unique = true)
+    private String user_reference;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ComplianceTier complianceTier = ComplianceTier.TIER_1;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private AccountStatus status = AccountStatus.PENDING_VERIFICATION; 
 
     private String password;
     private String firstname;
     private String lastname;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String phoneNumber;
 
-     @CreationTimestamp
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @UpdateTimestamp
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
 }

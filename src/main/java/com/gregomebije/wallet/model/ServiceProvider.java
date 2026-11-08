@@ -1,13 +1,13 @@
 package com.gregomebije.wallet.model;
 
-import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import lombok.*;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 
 @Entity
@@ -21,26 +21,29 @@ import lombok.*;
 public class ServiceProvider {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(nullable = false, unique = true)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false)
+    private UUID id;
 
-    private String platformName;
-    private String serviceName;
-    private int cost;  //store in kobo
-    private int revenue;
+    @Column(nullable = false, unique = true)
+    private String name;
+    
+    @Column(nullable = false)
+    private long cost;  //store in kobo
+
+    @Column(nullable = false)
+    private long revenue;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @UpdateTimestamp
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
-    public ServiceProvider(String platformName, String serviceName, int cost, int revenue) {
-        this.platformName = platformName;
-        this.serviceName = serviceName;
+    public ServiceProvider(String name, int cost, int revenue) {
+        this.name = name;
         this.cost = cost;
         this.revenue = revenue;
     }

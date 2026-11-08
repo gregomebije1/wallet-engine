@@ -1,12 +1,14 @@
 package com.gregomebije.wallet.model;
 
-import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import lombok.*;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+import com.gregomebije.wallet.model.Models.*;
 
 @Entity
 @Table(name = "services")
@@ -19,25 +21,27 @@ import lombok.*;
 public class Service {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(nullable = false, unique = true)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
-    private String name;
+    @Enumerated(EnumType.STRING) // Explicitly maps Java text names to Postgres Enum items
+    @Column(name = "name", nullable = false, unique = true)
+    private ServiceType name;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_provider_id")
+    @JoinColumn(name = "service_providers_id", nullable = false)
     private ServiceProvider serviceProvider;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(nullable = false, updatable = false)
+    private OffsetDateTime updatedAt;
 
-    public Service(String name, ServiceProvider serviceProvider) {
+    public Service(ServiceType name, ServiceProvider serviceProvider) {
         this.name = name;
         this.serviceProvider = serviceProvider;
     }
