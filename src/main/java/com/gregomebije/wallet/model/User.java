@@ -17,6 +17,9 @@ import lombok.Setter;
 import java.util.UUID;
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.gregomebije.wallet.model.Models.*;
 
 
@@ -34,28 +37,29 @@ public class User {
     @Column(nullable = false, unique = true)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private String user_reference;
+    //@Column(nullable = false, unique = true)
+    //private String user_reference;
+
+    //@Builder.Default
+    //@Enumerated(EnumType.STRING)
+    //@Column(nullable = false)
+    //private ComplianceTier complianceTier = ComplianceTier.TIER_1;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ComplianceTier complianceTier = ComplianceTier.TIER_1;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(columnDefinition = "account_status", nullable = false)
     private AccountStatus status = AccountStatus.PENDING_VERIFICATION; 
 
-    private String password;
-    private String firstname;
-    private String lastname;
+    //private String password;
+    //private String firstname;
+    //private String lastname;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, unique = true)
-    private String phoneNumber;
+    //@Column(nullable = false, unique = true)
+    //private String phoneNumber;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

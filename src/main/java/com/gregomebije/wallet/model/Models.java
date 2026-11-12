@@ -11,8 +11,9 @@ public final class Models {
 
     public enum ComplianceTier { TIER_1, TIER_2, TIER_3}
     public enum FundingStatus { INITIATED, PENDING_PROVIDER, SUCCESS, FAILED}
-    public enum ServiceType { FUND, TRANSFER, WITHDRAW, AIRTIME, DATA_SUBSCRIPTION, UTILITY_BILL, CABLE_TV}
+    public enum ServiceType { FUND, P2P, PAYOUT, AIRTIME, DATA_SUBSCRIPTION, UTILITY_BILL, CABLE_TV}
     public enum AccountStatus { PENDING_VERIFICATION, ACTIVE, SUSPENDED };
+    public enum ServiceStatus { PENDING, SUCCESS, FAILED };
     public enum SagaStatus {STARTED, LEDGER_HOLD_SUCCESS, VENDOR_CALL_SUCCESS, COMPLETED, FAILED, COMPENSATING};
 
     public record WalletAccountRequest(

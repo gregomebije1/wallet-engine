@@ -1,4 +1,4 @@
-package com.gregomebije.wallet.api;
+package com.gregomebije.wallet.controller;
 
 import com.gregomebije.wallet.model.Models.*;
 import com.gregomebije.wallet.service.account.*;
