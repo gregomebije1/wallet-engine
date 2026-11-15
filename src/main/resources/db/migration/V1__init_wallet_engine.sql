@@ -71,19 +71,6 @@ CREATE TABLE wallet_transactions (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE outbox (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), 
-  topic TEXT NOT NULL, 
-  payload JSONB NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, 
-  published_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE TABLE inbox (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), 
-    event_id TEXT NOT NULL, 
-    received_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
 CREATE TABLE banks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -122,3 +109,28 @@ CREATE TABLE services (
 );
 
 
+CREATE TABLE outbox (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  target TEXT NOT NULL, 
+  path TEXT NOT NULL,
+  idempotency_key UUID NOT NULL, 
+  body JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), 
+  published_at TIMESTAMPTZ
+);
+
+CREATE TABLE inbox (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id UUID NOT NULL UNIQUE, 
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE FUNCTION eline(account TEXT, sub_ref UUID, debit BIGINT, credit BIGINT) RETURNS JSONB
+LANGUAGE sql IMMUTABLE AS $$
+  SELECT jsonb_build_object('account', account, 'sub_ref', sub_ref, 'debit', debit, 'credit', credit) $$;
+
+CREATE FUNCTION enqueue_entry(entry_id UUID, book TEXT, memo TEXT, lines JSONB[]) RETURNS void
+LANGUAGE sql AS $$
+  INSERT INTO outbox (target, path, idempotency_key, body)
+  VALUES ('ledger', '/ledger/v1/entries', entry_id,
+          jsonb_build_object('entry_id', entry_id, 'book', book, 'memo', memo, 'lines', to_jsonb(lines))) $$;

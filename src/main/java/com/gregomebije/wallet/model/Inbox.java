@@ -1,4 +1,4 @@
-package com.gregomebije.wallet.model;
+package com.gregomebije.gateway.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,7 +7,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.gregomebije.wallet.model.Models.*;
 
 @Entity
 @Table(name = "inbox")
@@ -24,8 +23,8 @@ public class Inbox {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
     
-    @Column(name = "event_id", columnDefinition = "TEXT", nullable = false)
-    private String eventId;
+    @Column(name = "message_id", columnDefinition = "UUID", nullable = false)
+    private String messageId;
 
     @CreationTimestamp
     @Column(name = "received_at", nullable = false, updatable = false)

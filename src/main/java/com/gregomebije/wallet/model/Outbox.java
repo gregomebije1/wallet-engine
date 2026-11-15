@@ -1,4 +1,4 @@
-package com.gregomebije.wallet.model;
+package com.gregomebije.gateway.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,8 +9,6 @@ import java.util.UUID;
 import java.util.Map;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
-import com.gregomebije.wallet.model.Models.*;
 
 @Entity
 @Table(name = "outbox")
@@ -27,12 +25,18 @@ public class Outbox {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "topic", columnDefinition = "TEXT", nullable = false)
-    private String topic;
+    @Column(name = "target", columnDefinition = "TEXT", nullable = false)
+    private String target;
+
+    @Column(name = "path", columnDefinition = "TEXT", nullable = false)
+    private String path;
+
+    @Column(name = "idempotency_key", columnDefinition = "UUID", nullable = false)
+    private UUID idempotencyKey;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
-    private Map<String, Object> payload;
+    @Column(name = "bdy", columnDefinition = "jsonb", nullable = false)
+    private Map<String, Object> body;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
