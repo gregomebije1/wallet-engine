@@ -51,7 +51,8 @@ public class User {
     @Column(columnDefinition = "account_status", nullable = false)
     private AccountStatus status = AccountStatus.PENDING_VERIFICATION; 
 
-    //private String password;
+    @Column(nullable = false)
+    private String passwordHash;
     //private String firstname;
     //private String lastname;
 

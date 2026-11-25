@@ -2,62 +2,62 @@ package com.gregomebije.wallet.integration;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.client.RestClient;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
-/** WebClient-based client for the ledger API. */
+import com.gregomebije.wallet.dto.Models.*;
+
+/** RestClient-based client for the ledger API. */
 @Component
 public class LedgerClient {
 
-    public record UserRequest(String email, String password, String firstName, String lastName) {}
-    public record TenantRequest(String tenantId, String tenantName, String email) {}
-    public record LoginRequest(String tenantId, String email, String password) {}
-    public record TokenResponse(String accessToken) {}
-    public record AccountRequest(String accountNumber, String name, String type, String currency) {}
-    public record LedgerLine(String accountId, String ledgerLineType, BigDecimal debit, BigDecimal credit) {}
-    public record TransactionRequest(String description, String idempotencyKey, List<LedgerLine> lines) {}
+    private final RestClient ledgerRestClient;
 
-    private final WebClient ledgerWebClient;
-
-    // Two WebClient beans exist (ledger + payment gateway), so the qualifier is required.
-    public LedgerClient(@Qualifier("ledgerWebClient") WebClient ledgerWebClient) {
-        this.ledgerWebClient = ledgerWebClient;
+    public LedgerClient(@Qualifier("ledgerRestClient") RestClient ledgerRestClient) {
+        this.ledgerRestClient = ledgerRestClient;
     }
 
-    public Mono<String> registerUser(UserRequest request) {
+    public String registerUser(CreateUserRequest request) {
         return post("/api/v1/onboarding/user", request, null);
     }
-
-    public Mono<String> registerTenant(TenantRequest request) {
-        return post("/api/v1/onboarding/tenant", request, null);
-    }
-
-    public Mono<String> login(LoginRequest request) {
-        return ledgerWebClient.post()
+    
+    public String login(LoginRequest request) {
+        LoginResponse response = ledgerRestClient.post()
                 .uri("/api/v1/onboarding/login")
-                .bodyValue(request)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
                 .retrieve()
-                .bodyToMono(TokenResponse.class)
-                .map(TokenResponse::accessToken);
+                .body(LoginResponse.class);
+
+        if (response == null || response.accessToken() == null) {
+            throw new IllegalStateException("Login response did not contain an accessToken");
+        }
+        return response.accessToken();
     }
 
-    public Mono<String> createAccount(String token, AccountRequest request) {
+    public String createAccount(String token, CreateAccountRequest request) {
         return post("/api/v1/ledgers/accounts", request, token);
     }
 
-    public Mono<String> postTransaction(String token, TransactionRequest request) {
+    public String postTransaction(String token, CreateTransactionRequest request) {
         return post("/api/v1/ledgers/transactions", request, token);
     }
 
-    private Mono<String> post(String uri, Object body, String token) {
-        WebClient.RequestBodySpec spec = ledgerWebClient.post().uri(uri);
+    private String post(String uri, Object body, String token) {
+        RestClient.RequestBodySpec spec = ledgerRestClient.post()
+                .uri(uri)
+                .contentType(MediaType.APPLICATION_JSON);
+
         if (token != null) {
             spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
         }
-        return spec.bodyValue(body).retrieve().bodyToMono(String.class);
+
+        return spec.body(body)
+                .retrieve()
+                .body(String.class);
     }
 }

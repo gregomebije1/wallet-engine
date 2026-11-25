@@ -1,33 +1,24 @@
-package com.gregomebije.gateway.model;
+package com.gregomebije.wallet.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-
 @Entity
 @Table(name = "inbox")
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Inbox {
+    @EmbeddedId
+    private InboxId id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
-    
-    @Column(name = "message_id", columnDefinition = "UUID", nullable = false)
-    private String messageId;
-
-    @CreationTimestamp
-    @Column(name = "received_at", nullable = false, updatable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "received_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime receivedAt;
 
+    protected Inbox() {}
+    public Inbox(UUID userId, String messageId) {
+        this.id = new InboxId(userId, messageId);
+    }
 }

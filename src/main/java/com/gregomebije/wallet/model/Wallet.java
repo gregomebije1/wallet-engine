@@ -37,7 +37,7 @@ public class Wallet {
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private User user;
 
-    @Column(name = "ledger_account_id", nullable = false, unique = true, length = 64)
+    @Column(name = "ledger_account_id", length = 64)
     private String ledgerAccountId;
 
     @Min(0)

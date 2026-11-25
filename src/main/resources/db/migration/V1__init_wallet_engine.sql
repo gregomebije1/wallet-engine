@@ -11,6 +11,9 @@ CREATE TYPE service_type     AS ENUM ('FUND', 'TRANSFER', 'WITHDRAW', 'AIRTIME',
 CREATE TYPE funding_status   AS ENUM ('INITIATED', 'PENDING_PROVIDER', 'SUCCESS', 'FAILED');
 CREATE TYPE service_status   AS ENUM ('INITIATED', 'PENDING_PROVIDER', 'SUCCESS', 'FAILED');
 
+CREATE TYPE account_type AS ENUM ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE');
+
+
 -- ============================================================================
 -- 2. CLIENT IDENTITY BOUNDS & COMPLIANCE LAYER
 -- ============================================================================
@@ -27,12 +30,23 @@ INSERT INTO compliance_limits (tier, single_transaction_limit, daily_velocity_li
 ('TIER_2', 250000, 1000000), 
 ('TIER_3', 9223372036854775807, 9223372036854775807); 
 
+CREATE TABLE accounts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    account_id VARCHAR(64) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    type account_type NOT NULL,
+    currency VARCHAR(3) NOT NULL, -- ISO 4217 Currency Code (e.g., 'GBP')
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     --user_reference VARCHAR(64) UNIQUE NOT NULL, 
     --compliance_tier compliance_tier NOT NULL DEFAULT 'TIER_1',
     status account_status NOT NULL DEFAULT 'PENDING_VERIFICATION',
-    --password VARCHAR(64) NOT NULL,
+    password_hash VARCHAR(64) NOT NULL,
     --firstname VARCHAR(64) NOT NULL,
     --lastname VARCHAR(64) NOT NULL,
     --phone_number VARCHAR(64) UNIQUE NOT NULL,
@@ -47,7 +61,7 @@ CREATE TABLE users (
 CREATE TABLE wallets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    ledger_account_id VARCHAR(64) UNIQUE NOT NULL, 
+    ledger_account_id VARCHAR(64), 
     available BIGINT NOT NULL DEFAULT 0 CHECK (available >= 0),
     held      BIGINT NOT NULL DEFAULT 0 CHECK (held >= 0),
     currency VARCHAR(3) NOT NULL, 
@@ -109,28 +123,28 @@ CREATE TABLE services (
 );
 
 
-CREATE TABLE outbox (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  target TEXT NOT NULL, 
-  path TEXT NOT NULL,
-  idempotency_key UUID NOT NULL, 
-  body JSONB NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), 
-  published_at TIMESTAMPTZ
+CREATE TABLE IF NOT EXISTS inbox (
+   user_id UUID NOT NULL REFERENCES users(id),
+    message_id VARCHAR(255) NOT NULL,
+    received_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, message_id)
 );
 
-CREATE TABLE inbox (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  message_id UUID NOT NULL UNIQUE, 
-  received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+
+CREATE TABLE IF NOT EXISTS outbox (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    target VARCHAR(64) NOT NULL,
+    path VARCHAR(255) NOT NULL,
+    idempotency_key VARCHAR(255) NOT NULL UNIQUE,
+    body JSONB NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+    attempts INT NOT NULL DEFAULT 0,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    published_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    next_attempt_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE FUNCTION eline(account TEXT, sub_ref UUID, debit BIGINT, credit BIGINT) RETURNS JSONB
-LANGUAGE sql IMMUTABLE AS $$
-  SELECT jsonb_build_object('account', account, 'sub_ref', sub_ref, 'debit', debit, 'credit', credit) $$;
-
-CREATE FUNCTION enqueue_entry(entry_id UUID, book TEXT, memo TEXT, lines JSONB[]) RETURNS void
-LANGUAGE sql AS $$
-  INSERT INTO outbox (target, path, idempotency_key, body)
-  VALUES ('ledger', '/ledger/v1/entries', entry_id,
-          jsonb_build_object('entry_id', entry_id, 'book', book, 'memo', memo, 'lines', to_jsonb(lines))) $$;
+CREATE INDEX IF NOT EXISTS idx_outbox_pending
+    ON outbox (next_attempt_at, id)
+    WHERE status = 'PENDING';
