@@ -40,6 +40,8 @@ public class WalletAccountService {
     private final JsonMapper jsonMapper;
     private final String ledgerServiceTenantId;
     private final PasswordEncoder passwordEncoder;
+    String gatewayChargesUrl;
+    ServiceProviderRepository serviceProviderRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(WalletAccountService.class);
 
@@ -55,7 +57,9 @@ public class WalletAccountService {
             LedgerTokenService ledgerTokenService,
             JsonMapper jsonMapper, 
             @Value("${services.ledger.tenant-id}") String ledgerServiceTenantId,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            @Value("${services.gateway.charges.url}") String gatewayChargesUrl,
+            ServiceProviderRepository serviceProviderRepository) {
         this.outboxRepository = outboxRepository;
         this.accountRepository = accountRepository;
         this.inboxRepository = inboxRepository;
@@ -68,6 +72,8 @@ public class WalletAccountService {
         this.jsonMapper = jsonMapper;
         this.ledgerServiceTenantId = ledgerServiceTenantId;
         this.passwordEncoder = passwordEncoder;
+        this.gatewayChargesUrl = gatewayChargesUrl;  
+        serviceProviderRepository = serviceProviderRepository;
     }
 
     @Transactional
@@ -152,7 +158,76 @@ public class WalletAccountService {
     }
     
     @Transactional
-    public DepositResponse deposit(DepositRequest request) {
+    public DepositResponse deposit(String idempotencyKey, DepositRequest request) {
+
+         // 1. Tenant-scoped deduplication check
+        /*
+        int insertedRows = inboxRepository.insertIgnoreConflict(UUID.fromString(request.tenantId()), request.idempotencyKey());
+        if (insertedRows == 0) {
+            return paymentRepository.findByTenantIdAndIdempotencyKey(UUID.fromString(request.tenantId()), request.idempotencyKey())
+                      .map(p -> new CaptureResult(p.getId().toString(), p.getStatus()))
+                    .orElseThrow(() -> new IllegalStateException("Duplicate inbox key with no payment: " + request.idempotencyKey()));
+        }
+        */
+
+        // 2. Save transaction
+        Wallet wallet = walletRepository.findById(UUID.fromString(request.walletId()))
+            .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
+
+        ServiceProvider sp = serviceProviderRepository.findByName("FUNDING")
+            .orElseThrow(() -> new IllegalArgumentException("Servie provider not found"));
+        
+        WalletTransaction wTrans = walletTransactionRepository.save(
+            new WalletTransaction(idempotencyKey,
+                    wallet, 
+                    ServiceType.FUND,
+                    request.amount(), 
+                    sp.getCost(request.amount()), 
+                    ServiceStatus.PENDING));
+
+        // 3. Stage Gateway Webhook
+        var webhookPayload = new CreateChargeRequest(
+            "charge_id", 
+            idempotencyKey,
+            request.amount(),
+            request.amount() + sp.getCost(request.amount()));
+
+        /*
+        outboxRepository.save(
+                new Outbox(1),
+                 "gateway", 
+                 gatewayChargesUrl, 
+                 idempotencyKey, 
+                 webhookPayload);
+        */
+    /*
+        
+        //4. Ledger Entries
+        String g100AccountId = accountRepository.findByName("Processor Receivable").get().getAccountId();
+        String g200AccountId = accountRepository.findByName("Merchant Settlement Payable").get().getAccountId();
+        String g300AccountId = accountRepository.findByName("Processing Fee Revenue").get().getAccountId();
+
+        String dep2 = "d0000000-0000-0000-0000-000000000002";
+       // 4. Enqueue Balanced Double-Entry Ledger SECOND using LedgerClient records directly
+        var transactionRequest = new CreateTransactionRequest(
+                "Wallet funding captured",
+                dep2,
+                List.of(
+                        new LedgerLine(UUID.fromString(g100AccountId), LedgerLineType.DEBIT, 10300L, 0L),   // Debit G100: 10300
+                        new LedgerLine(UUID.fromString(g200AccountId), LedgerLineType.CREDIT, 0L, 10150L),  // Credit G200: 10150
+                        new LedgerLine(UUID.fromString(g300AccountId), LedgerLineType.CREDIT, 0L, 150L)     // Credit G300: 150
+                )
+        );
+        //Todo: I need to match this.tenantId and request.tenantId()
+        //this.tenantId = 'payment_gateway_tenant' but request.tenantId = "a UUID"
+        outboxRepository.save(
+                new Outbox(UUID.fromString(request.tenantId()), "ledger", "/api/v1/ledgers/transactions", dep2, transactionRequest)
+               
+        );
+
+
+        */
+
         return new DepositResponse(
             "d0000000-…-0001",
             "DEPOSIT",
@@ -164,9 +239,9 @@ public class WalletAccountService {
     }
 
     public TransactionResponse transactions(String transactionId) {
-        WalletTransaction walletTransaction = walletTransactionRepository
-            .findById(UUID.fromString(transactionId))
-            .orElseThrow(() -> new IllegalArgumentException("Unknown transaction"));
+        //WalletTransaction walletTransaction = walletTransactionRepository
+        //    .findById(UUID.fromString(transactionId))
+        //    .orElseThrow(() -> new IllegalArgumentException("Unknown transaction"));
 
 			return new TransactionResponse(
                 "d0000000-…-0001",

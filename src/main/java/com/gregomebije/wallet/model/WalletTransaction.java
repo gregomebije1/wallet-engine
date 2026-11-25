@@ -10,7 +10,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.validation.constraints.Min;
 
-import com.gregomebije.wallet.model.Models.*;
+import com.gregomebije.wallet.dto.Models.*;
 
 @Entity
 @Table(name = "wallet_transactions")
@@ -37,7 +37,7 @@ public class WalletTransaction {
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(columnDefinition = "service_type", nullable = false)
-    private ServiceType type;
+    private ServiceType serviceType;
 
     @Min(0)
     @Column(nullable = false, updatable = false)
@@ -53,10 +53,20 @@ public class WalletTransaction {
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(columnDefinition = "service_status", nullable = false)
-    private ServiceStatus status;
+    private ServiceStatus serviceStatus;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    public WalletTransaction(String idempotencyKey, Wallet wallet, ServiceType serviceType, 
+        long amount, long fee, ServiceStatus serviceStatus) {
+        this.idempotencyKey = idempotencyKey;
+        this.wallet = wallet;
+        this.serviceType = serviceType;
+        this.amount = amount;
+        this.fee = fee;
+        this.serviceStatus = serviceStatus;
+    }
 
 }

@@ -20,8 +20,10 @@ import java.time.OffsetDateTime;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import com.gregomebije.wallet.model.Models.*;
+import com.gregomebije.wallet.dto.Models.*;
 
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -48,8 +50,8 @@ public class User {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(columnDefinition = "account_status", nullable = false)
-    private AccountStatus status = AccountStatus.PENDING_VERIFICATION; 
+    @Column(columnDefinition = "status", nullable = false)
+    private Status status = Status.PENDING_VERIFICATION; 
 
     @Column(nullable = false)
     private String passwordHash;
@@ -62,6 +64,16 @@ public class User {
     //@Column(nullable = false, unique = true)
     //private String phoneNumber;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
+    
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -69,5 +81,13 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = new HashSet<>(roles);
+    }
 
 }

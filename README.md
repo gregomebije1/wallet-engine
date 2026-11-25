@@ -309,6 +309,27 @@ psql -h localhost -p 5432 -U postgres
 
 ./mvnw clean test-compile
 
+-----
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <scope>runtime</scope>
+    <optional>true</optional>
+</dependency>
+```
+./mvnw spring-boot:run
+sudo apt install entr
+find src/main -name "*.java" | entr -r ./mvnw compile
+-----------
+
+
+    @Builder.Default
+    @Column(nullable = false)
+    @jakarta.persistence.Version
+    private int version = 0;
+
+    
 ============
 DROP TABLE IF EXISTS flyway_schema_history CASCADE;
 DROP TABLE IF EXISTS services CASCADE;

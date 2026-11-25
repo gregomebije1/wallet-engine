@@ -9,6 +9,8 @@ import lombok.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "service_providers")
@@ -29,10 +31,13 @@ public class ServiceProvider {
     private String name;
     
     @Column(nullable = false)
-    private long cost;  //store in kobo
+    private BigDecimal cost;  //store in kobo
 
     @Column(nullable = false)
-    private long revenue;
+    private BigDecimal revenue;
+
+    @Column(nullable = false)
+    private String type; //percent or amount
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -42,10 +47,41 @@ public class ServiceProvider {
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
 
-    public ServiceProvider(String name, int cost, int revenue) {
+    public ServiceProvider(String name, BigDecimal cost, BigDecimal revenue) {
         this.name = name;
         this.cost = cost;
         this.revenue = revenue;
+    }
+    public long getCost(long amount) {
+        BigDecimal result; 
+
+        if ("percent".equals(type)) {
+            result = BigDecimal.valueOf(amount)
+                 .multiply(cost)
+                .setScale(2, RoundingMode.HALF_UP);
+        } else {
+            result = cost;
+        }
+
+        return result
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValue();
+    }
+
+    public long getRevenue(long amount) {
+        BigDecimal result; 
+
+        if ("percent".equals(type)) {
+            result = BigDecimal.valueOf(amount)
+                 .multiply(revenue)
+                .setScale(2, RoundingMode.HALF_UP);
+        } else {
+            result = revenue;
+        }
+
+        return result
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValue();
     }
 
 }

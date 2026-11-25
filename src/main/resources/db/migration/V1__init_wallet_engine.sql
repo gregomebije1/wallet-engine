@@ -5,10 +5,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto"; 
 
 CREATE TYPE compliance_tier AS ENUM ('TIER_1', 'TIER_2', 'TIER_3');
-CREATE TYPE account_status  AS ENUM ('PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED');
+CREATE TYPE status  AS ENUM ('PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED');
 CREATE TYPE saga_status      AS ENUM ('STARTED', 'LEDGER_HOLD_SUCCESS', 'VENDOR_CALL_SUCCESS', 'COMPLETED', 'FAILED', 'COMPENSATING');
 CREATE TYPE service_type     AS ENUM ('FUND', 'TRANSFER', 'WITHDRAW', 'AIRTIME', 'DATA_SUBSCRIPTION', 'UTILITY_BILL', 'CABLE_TV');
-CREATE TYPE funding_status   AS ENUM ('INITIATED', 'PENDING_PROVIDER', 'SUCCESS', 'FAILED');
 CREATE TYPE service_status   AS ENUM ('INITIATED', 'PENDING_PROVIDER', 'SUCCESS', 'FAILED');
 
 CREATE TYPE account_type AS ENUM ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE');
@@ -43,16 +42,27 @@ CREATE TABLE accounts (
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(64) UNIQUE NOT NULL,
+    password_hash VARCHAR(64) NOT NULL,
     --user_reference VARCHAR(64) UNIQUE NOT NULL, 
     --compliance_tier compliance_tier NOT NULL DEFAULT 'TIER_1',
-    status account_status NOT NULL DEFAULT 'PENDING_VERIFICATION',
-    password_hash VARCHAR(64) NOT NULL,
+    status status NOT NULL DEFAULT 'PENDING_VERIFICATION',
     --firstname VARCHAR(64) NOT NULL,
     --lastname VARCHAR(64) NOT NULL,
     --phone_number VARCHAR(64) UNIQUE NOT NULL,
-    email VARCHAR(64) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(32) NOT NULL UNIQUE
+);
+
+CREATE TABLE user_roles (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    PRIMARY KEY (user_id, role_id)
 );
 
 -- ============================================================================
@@ -76,11 +86,11 @@ CREATE TABLE wallet_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     idempotency_key VARCHAR(255) UNIQUE NOT NULL,
     wallet_id UUID NOT NULL REFERENCES wallets(id),
-    type service_type NOT NULL, -- FUND, P2P, VAS, PAYOUT
+    service_type service_type NOT NULL, -- FUND, P2P, VAS, PAYOUT
     amount BIGINT NOT NULL, -- Amounts are integer pence
     fee BIGINT NOT NULL DEFAULT 0,
     counterparty_wallet BIGINT,
-    status VARCHAR(50) NOT NULL, -- PENDING, SUCCESS, FAILED
+    service_status VARCHAR(50) NOT NULL, -- PENDING, SUCCESS, FAILED
     --reference_id VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -108,11 +118,14 @@ CREATE TABLE bank_accounts (
 CREATE TABLE service_providers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
-    cost BIGINT NOT NULL,
-    revenue BIGINT NOT NULL,
+    type VARCHAR(64) NOT NULL, -- percent or amount
+    cost DECIMAL NOT NULL,
+    revenue DECIMAL NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO service_providers (name, type, cost, revenue) VALUES ('FUNDING', 'percent', 0.01, 0.005);
 
 CREATE TABLE services (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

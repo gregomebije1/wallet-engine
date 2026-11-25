@@ -8,7 +8,7 @@ import lombok.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.gregomebije.wallet.model.Models.*;
+import com.gregomebije.wallet.dto.Models.*;
 
 @Entity
 @Table(name = "services")

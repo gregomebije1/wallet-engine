@@ -14,6 +14,12 @@ import jakarta.validation.constraints.NotNull;
 public final class Models {
     private Models() {}
  
+    public enum ERole {
+        ROLE_USER,
+        ROLE_MODERATOR,
+        ROLE_ADMIN
+    }
+
     //Ledger DTOs
     public enum LedgerLineType { DEBIT, CREDIT }
     public enum AccountType { 
@@ -23,10 +29,8 @@ public final class Models {
           public boolean isDebitNormal() {
                return this == ASSET || this == EXPENSE;
           }
-     }
-
+    }
     public record CreateAccountRequest (  String accountNumber,  String name,  AccountType type,  String currency ) {}
-
     public record CreateTransactionRequest ( String description,  String idempotencyKey,  List<LedgerLine> lines ) {}
 
     // A line may carry a sub_ref: the customer wallet Id or merchant id
@@ -34,6 +38,12 @@ public final class Models {
     // without creating an account per customer.
     public record LedgerLine(UUID accountId, String subRef, LedgerLineType ledgerLineType,  long debit, long credit) {}
 
+    //Types
+    public enum ComplianceTier { TIER_1, TIER_2, TIER_3};
+    public enum Status { PENDING_VERIFICATION, ACTIVE, SUSPENDED };
+    public enum SagaStatus {  STARTED, LEDGER_HOLD_SUCCESS, VENDOR_CALL_SUCCESS, COMPLETED, FAILED, COMPENSATING };
+    public enum ServiceType {  FUND, TRANSFER, WITHDRAW, AIRTIME, DATA_SUBSCRIPTION, UTILITY_BILL, CABLE_TV};
+    public enum ServiceStatus {  INITIATED, PENDING, SUCCESS, FAILED};
     
     //Error messages
     public record ErrorMessage (
@@ -122,6 +132,14 @@ public final class Models {
         long held          //},
     ) {}
 
+    //Webhook
+    public record CreateChargeRequest(
+            String descr,
+            String idempotencyKey,
+            long amount, 
+            long amountPlusFee
+        ) {}
+               
     public record WebhookRequest (
         String type, //charge.captured, settlement.paid
         //payout.succeeded, payout.failed

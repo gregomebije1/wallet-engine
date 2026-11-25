@@ -39,16 +39,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-restclient</artifactId>
-        </dependency>
-
-		<!--Web Flux-->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
 
 		<!-- Flyway -->
 		<dependency>
@@ -61,6 +51,12 @@
 			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
 
+        <!-- OpenAPI / Swagger UI -->
+       <dependency>
+           <groupId>org.springdoc</groupId>
+           <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+           <version>3.1.0</version>
+       </dependency>
 		<!-- JWT API Definition Interface -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
@@ -87,12 +83,13 @@
 		
 
 		<!-- Development Tools & Drivers -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>${lombok.version}</version>
-			<optional>true</optional>
-		</dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
+            <scope>provided</scope>
+        </dependency>
+
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -154,13 +151,31 @@
 		</dependency>
 	</dependencies>
 
+
+
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>${java.version}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -174,6 +189,7 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+            -->
 		</plugins>
 	</build>
 </project>

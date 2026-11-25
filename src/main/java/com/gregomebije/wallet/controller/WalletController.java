@@ -41,9 +41,9 @@ public class WalletController {
     }
 
     @PostMapping("/deposit")
-    ResponseEntity<DepositResponse> deposit(@RequestHeader("X-Idempotency-Key") String key,
+    ResponseEntity<DepositResponse> deposit(@RequestHeader("X-Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody DepositRequest request) {
-        return ResponseEntity.ok(walletAccountService.deposit(request));
+        return ResponseEntity.ok(walletAccountService.deposit(idempotencyKey, request));
     }
 
     @GetMapping("/transactions")
