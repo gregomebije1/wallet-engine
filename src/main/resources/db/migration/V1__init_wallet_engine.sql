@@ -43,13 +43,9 @@ CREATE TABLE accounts (
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(64) UNIQUE NOT NULL,
-    password_hash VARCHAR(64) NOT NULL,
-    --user_reference VARCHAR(64) UNIQUE NOT NULL, 
-    --compliance_tier compliance_tier NOT NULL DEFAULT 'TIER_1',
+    password VARCHAR(64) NOT NULL,
     status status NOT NULL DEFAULT 'PENDING_VERIFICATION',
-    --firstname VARCHAR(64) NOT NULL,
-    --lastname VARCHAR(64) NOT NULL,
-    --phone_number VARCHAR(64) UNIQUE NOT NULL,
+    role VARCHAR(64) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
 
-import com.gregomebije.wallet.service.account.*;
+import com.gregomebije.wallet.service.WalletService;
 import com.gregomebije.wallet.dto.Models.*;
 import com.gregomebije.wallet.model.*;
 import com.gregomebije.wallet.repository.*;
@@ -17,33 +17,16 @@ import com.gregomebije.wallet.repository.*;
 @RequestMapping("/api/wallet/v1")
 public class WalletController {
     
-    private final WalletAccountService walletAccountService;
+    private final WalletService walletService;
      
-    public WalletController(WalletAccountService walletAccountService) { 
-        this.walletAccountService = walletAccountService; 
-    }
-
-    @GetMapping("/setup")
-    ResponseEntity<?> setup() {
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(Map.of("status", "success", "data", walletAccountService.setup()));
-    }
-
-    @PostMapping("/register")
-    ResponseEntity<?> create(@Valid @RequestBody CreateUserRequest request) {
-         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(Map.of("status", "success", "data", walletAccountService.register(request)));
-    }
-
-    @PostMapping("/login")
-    ResponseEntity<LoginResponse> login(@Valid @RequestBody WalletLoginRequest request) {
-         return ResponseEntity.ok(walletAccountService.login(request));
+    public WalletController(WalletService walletService) { 
+        this.walletService = walletService; 
     }
 
     @PostMapping("/deposit")
     ResponseEntity<DepositResponse> deposit(@RequestHeader("X-Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody DepositRequest request) {
-        return ResponseEntity.ok(walletAccountService.deposit(idempotencyKey, request));
+        return ResponseEntity.ok(walletService.deposit(idempotencyKey, request));
     }
 
     @GetMapping("/transactions")
@@ -51,20 +34,20 @@ public class WalletController {
 	    @RequestHeader("X-Idempotency-Key") String key,
         @PathVariable("transactionId") String transactionId) {
         return new ResponseEntity<>(
-            walletAccountService.transactions(transactionId),
+            walletService.transactions(transactionId),
 	        HttpStatus.OK);
     }
 
     @PostMapping("/transfer")
     ResponseEntity<TransferResponse> transfer(@RequestHeader("X-Idempotency-Key") String key,
             @Valid @RequestBody TransferRequest request) {
-        return ResponseEntity.accepted().body(walletAccountService.transfer(request));
+        return ResponseEntity.accepted().body(walletService.transfer(request));
     }
     
     @PostMapping("/purchase")
     ResponseEntity<PurchaseResponse> purchase(@RequestHeader("X-Idempotency-Key") String key,
             @Valid @RequestBody PurchaseRequest request) {
-        return ResponseEntity.accepted().body(walletAccountService.purchase(request));
+        return ResponseEntity.accepted().body(walletService.purchase(request));
     }
 
     @PostMapping("/webhooks/gateway")
@@ -91,13 +74,13 @@ public class WalletController {
         */
        
 
-        return ResponseEntity.status(HttpStatus.OK).body(walletAccountService.webhook(request));
+        return ResponseEntity.status(HttpStatus.OK).body(walletService.webhook(request));
     }
 
     
     @PostMapping("/balances/as_of")
     ResponseEntity<WalletBalanceResponse> balances(@RequestHeader("X-Idempotency-Key") String key, @Valid @RequestParam("as_of") String asOf) {
-        return ResponseEntity.status(HttpStatus.OK).body(walletAccountService.walletBalances(asOf));
+        return ResponseEntity.status(HttpStatus.OK).body(walletService.walletBalances(asOf));
     }
     
   

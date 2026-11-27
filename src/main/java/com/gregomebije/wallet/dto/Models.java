@@ -61,7 +61,7 @@ public final class Models {
     public record LoginRequest (  String tenantId,  String email,  String password ) {}
     public record LoginResponse (  String accessToken ) {}
 
-    public record WalletLoginRequest (  String tenantId,  String email,  String password ) {}
+    public record WalletLoginRequest (  String email,  String password ) {}
     
     //Transactions
     public record DepositRequest(

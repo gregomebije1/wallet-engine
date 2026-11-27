@@ -1,4 +1,4 @@
-package com.gregomebije.wallet.service.account;
+package com.gregomebije.wallet.service;
 
 import tools.jackson.databind.json.JsonMapper;
 import java.util.List;
@@ -26,7 +26,7 @@ import com.gregomebije.wallet.integration.LedgerClient;
 
 @Service
 //  Orchestrating the Workflow in a Wallet Service
-public class WalletAccountService {
+public class WalletService {
 
     private final OutboxRepository outboxRepository;
     private final AccountRepository accountRepository;
@@ -40,12 +40,12 @@ public class WalletAccountService {
     private final JsonMapper jsonMapper;
     private final String ledgerServiceTenantId;
     private final PasswordEncoder passwordEncoder;
-    String gatewayChargesUrl;
-    ServiceProviderRepository serviceProviderRepository;
+    private final String gatewayChargesUrl;
+    private final ServiceProviderRepository serviceProviderRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(WalletAccountService.class);
+    private static final Logger logger = LoggerFactory.getLogger(WalletService.class);
 
-    public WalletAccountService (
+    public WalletService (
             OutboxRepository outboxRepository,
             AccountRepository accountRepository,
             InboxRepository inboxRepository,
@@ -73,90 +73,10 @@ public class WalletAccountService {
         this.ledgerServiceTenantId = ledgerServiceTenantId;
         this.passwordEncoder = passwordEncoder;
         this.gatewayChargesUrl = gatewayChargesUrl;  
-        serviceProviderRepository = serviceProviderRepository;
+        this.serviceProviderRepository = serviceProviderRepository;
     }
 
-    @Transactional
-    public String setup() {
-        String token = ledgerTokenService.getTokenForTenant(this.ledgerServiceTenantId).toString();
-
-        List<CreateAccountRequest> specs = List.of(
-            new CreateAccountRequest("W010", "Settlement Bank", AccountType.ASSET, "USD"),
-            new CreateAccountRequest("W100", "Customer Available", AccountType.LIABILITY, "USD"),
-
-            // A line may carry a sub_ref: the customer's wallet id
-            // That gives per-customer balances inside one account (a sub-ledger) 
-            // without creating an account per customer.
-            new CreateAccountRequest("W110", "Customer Held", AccountType.LIABILITY, "USD"), 
-            new CreateAccountRequest("W200", "Fee Revenue", AccountType.REVENUE, "USD"),
-            new CreateAccountRequest("W210", "Gateway Fees Expense", AccountType.EXPENSE, "USD"),
-            new CreateAccountRequest("W300", "Funding Receivable", AccountType.ASSET, "USD"),
-            new CreateAccountRequest("W400", "Vendor Payout Clearing", AccountType.ASSET, "USD")
-        );
-
-        List<Account> createdAccounts = new ArrayList<>();
-        for (CreateAccountRequest spec : specs) {
-            try {
-                String response = ledgerClient.createAccount(token, spec);
-                // Ensure response parsing strips any JSON formatting if applicable
-                String rawId = response.substring(response.indexOf(":") + 1)
-                                    .replaceAll("[\"{}]", "")
-                                    .trim();
-
-                Account account = Account.builder()
-                    .accountId(rawId)
-                    .name(spec.name())
-                    .type(spec.type())
-                    .currency(spec.currency())
-                    .isActive(true)
-                    .build();
-
-                createdAccounts.add(account);
-            } catch (HttpClientErrorException.Unauthorized ex) {
-                ledgerTokenService.evict(ledgerServiceTenantId);
-                logger.error("Unauthorized error in WalletAccountService.setup() for tenant {}", ledgerServiceTenantId, ex);
-                throw new IllegalStateException("Failed to authenticate with ledger service", ex);
-            }
-        }
-        accountRepository.saveAll(createdAccounts);
-        return "Setup complete";
-    }
-
-    @Transactional
-    public String register(CreateUserRequest request) throws RuntimeException {
-         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        User user = User.builder()
-            .email(request.email())
-            .passwordHash(passwordEncoder.encode(request.password()))
-            .build();
-        User savedUser = userRepository.save(user);
-
-        Wallet wallet = Wallet.builder()
-            .user(savedUser).currency("USD").build();
-        walletRepository.save(wallet);
-
-        return wallet.getId().toString();
-    }
-
-    @Transactional(readOnly = true)
-    public LoginResponse login(WalletLoginRequest request) throws IllegalArgumentException {
-        /*Optional <User> user = userRepository.findByEmail(request.email());
-        if (user == null)
-            throw new IllegalArgumentException("Invalid credentials");
-        */        
-        User user = userRepository.findByEmail(request.email())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid credentials");
-        }
-
-        //return jwtProvider.generateToken(userTenant.getTenant().getId(), userTenant.getUser().getEmail());
-        return new LoginResponse("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huZG9lQG1hbmdpdGFsLmNvbSI");
-    }
-    
+   
     @Transactional
     public DepositResponse deposit(String idempotencyKey, DepositRequest request) {
 
