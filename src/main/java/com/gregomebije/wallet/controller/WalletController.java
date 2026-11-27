@@ -5,7 +5,9 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.Map;
 
 import com.gregomebije.wallet.service.WalletService;
@@ -13,8 +15,11 @@ import com.gregomebije.wallet.dto.Models.*;
 import com.gregomebije.wallet.model.*;
 import com.gregomebije.wallet.repository.*;
 
+
 @RestController
 @RequestMapping("/api/wallet/v1")
+@Tag(name = "Wallet Operations", description = "deposit, transfer, purchase view transactions")
+@SecurityRequirement(name = "Bearer Authentication")     
 public class WalletController {
     
     private final WalletService walletService;
@@ -24,7 +29,8 @@ public class WalletController {
     }
 
     @PostMapping("/deposit")
-    ResponseEntity<DepositResponse> deposit(@RequestHeader("X-Idempotency-Key") String idempotencyKey,
+    @Operation(summary = "Deposit", description = "Deposit money into your wallet")
+    public ResponseEntity<DepositResponse> deposit(@RequestHeader("X-Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody DepositRequest request) {
         return ResponseEntity.ok(walletService.deposit(idempotencyKey, request));
     }

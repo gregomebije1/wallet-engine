@@ -1,4 +1,4 @@
-package com.example.starter.config;
+package com.gregomebije.wallet.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springdoc.core.models.GroupedOpenApi;
 
 import java.util.List;
 
@@ -20,12 +21,12 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        final String securitySchemeName = "bearerAuth";
+        final String securitySchemeName = "Bearer Authentication";
         return new OpenAPI()
                 .info(new Info()
-                        .title("Shared Contract CRUD & JWT Auth API")
+                        .title("Wallet Engine API")
                         .version("1.0.0")
-                        .description("Cross-host JWT Authentication & RBAC Starter API"))
+                        .description("This API exposes endpoints to the Wallet Engine"))
                 .servers(List.of(new Server().url(publicUrl).description("Configured Public Server")))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
@@ -33,6 +34,9 @@ public class OpenApiConfig {
                                 .name(securitySchemeName)
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
-                                .bearerFormat("JWT")));
+                                .bearerFormat("JWT")
+                                //.in(SecuritySchem.In.HEADER)
+                                //.description("JWT Bearer authorization")
+                                ));
     }
 }
