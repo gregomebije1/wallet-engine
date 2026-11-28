@@ -28,15 +28,13 @@ public class OpenApiConfig {
                         .version("1.0.0")
                         .description("This API exposes endpoints to the Wallet Engine"))
                 .servers(List.of(new Server().url(publicUrl).description("Configured Public Server")))
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                //.addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()
                                 .name(securitySchemeName)
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                //.in(SecuritySchem.In.HEADER)
-                                //.description("JWT Bearer authorization")
                                 ));
     }
 }

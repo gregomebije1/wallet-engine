@@ -85,6 +85,8 @@ public class SecurityConfig {
 						.requestMatchers("/api/wallet/v1/setup").permitAll()
                         .requestMatchers("/api/wallet/v1/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/wallet/v1/login").permitAll()
+                        .requestMatchers("/api/wallet/v1/webhooks/sign").permitAll()
+                        .requestMatchers("/api/wallet/v1/webhooks/gateway").permitAll()
 						.requestMatchers(SWAGGER_PATHS).permitAll()
                         .anyRequest().authenticated())
 				.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)

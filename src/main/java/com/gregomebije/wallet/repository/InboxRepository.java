@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface InboxRepository extends JpaRepository<Inbox, InboxId> {
+public interface InboxRepository extends JpaRepository<Inbox, UUID> {
     @Modifying
     //@Modifying tells Spring Data JPA that this query changes rows 
     // (INSERT/UPDATE/DELETE) rather than fetching data, and returns 

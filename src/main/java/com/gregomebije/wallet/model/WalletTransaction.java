@@ -28,7 +28,7 @@ public class WalletTransaction {
     private UUID id;
     
     @Column(name = "idempotency_key", nullable = false, unique = true, length = 255)
-    private String idempotencyKey;
+    private UUID idempotencyKey;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "wallet_id", nullable = false, updatable = false)
@@ -59,7 +59,7 @@ public class WalletTransaction {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    public WalletTransaction(String idempotencyKey, Wallet wallet, ServiceType serviceType, 
+    public WalletTransaction(UUID idempotencyKey, Wallet wallet, ServiceType serviceType, 
         long amount, long fee, ServiceStatus serviceStatus) {
         this.idempotencyKey = idempotencyKey;
         this.wallet = wallet;

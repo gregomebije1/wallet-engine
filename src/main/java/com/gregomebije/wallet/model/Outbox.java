@@ -19,20 +19,18 @@ import java.util.UUID;
 public class Outbox {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-    
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String target;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String path;
 
     @Column(name = "idempotency_key", nullable = false, unique = true)
-    private String idempotencyKey;
+    private UUID idempotencyKey;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
@@ -59,8 +57,7 @@ public class Outbox {
     private OffsetDateTime publishedAt;
 
     // Custom constructor ensuring nextAttemptAt is initialized
-    public Outbox(UUID userId, String target, String path, String idempotencyKey, Object body) {
-        this.userId = userId;
+    public Outbox(String target, String path, UUID idempotencyKey, Object body) {
         this.target = target;
         this.path = path;
         this.idempotencyKey = idempotencyKey;

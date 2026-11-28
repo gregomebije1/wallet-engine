@@ -76,50 +76,30 @@ public class WalletService {
         this.serviceProviderRepository = serviceProviderRepository;
     }
 
-   
-    @Transactional
     public DepositResponse deposit(String idempotencyKey, DepositRequest request) {
-
-         // 1. Tenant-scoped deduplication check
-        /*
-        int insertedRows = inboxRepository.insertIgnoreConflict(UUID.fromString(request.tenantId()), request.idempotencyKey());
-        if (insertedRows == 0) {
-            return paymentRepository.findByTenantIdAndIdempotencyKey(UUID.fromString(request.tenantId()), request.idempotencyKey())
-                      .map(p -> new CaptureResult(p.getId().toString(), p.getStatus()))
-                    .orElseThrow(() -> new IllegalStateException("Duplicate inbox key with no payment: " + request.idempotencyKey()));
-        }
-        */
-
-        // 2. Save transaction
-        Wallet wallet = walletRepository.findById(UUID.fromString(request.walletId()))
-            .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
 
         ServiceProvider sp = serviceProviderRepository.findByName("FUNDING")
             .orElseThrow(() -> new IllegalArgumentException("Servie provider not found"));
-        
-        WalletTransaction wTrans = walletTransactionRepository.save(
-            new WalletTransaction(idempotencyKey,
-                    wallet, 
-                    ServiceType.FUND,
-                    request.amount(), 
-                    sp.getCost(request.amount()), 
-                    ServiceStatus.PENDING));
 
-        // 3. Stage Gateway Webhook
-        var webhookPayload = new CreateChargeRequest(
-            "charge_id", 
-            idempotencyKey,
-            request.amount(),
-            request.amount() + sp.getCost(request.amount()));
+         return walletRepository.createDeposit(
+                idempotencyKey,
+                request,
+                sp.getCost(request.amount()));
+    }
 
-        /*
-        outboxRepository.save(
-                new Outbox(1),
-                 "gateway", 
-                 gatewayChargesUrl, 
-                 idempotencyKey, 
-                 webhookPayload);
-        */
+    public String captureDeposit(String idempotencyKey, String chargeId) {
+        return walletRepository.captureDeposit(idempotencyKey, chargeId);
+    }
+
+    public String settleGateway(String idempotencyKey, GatewayWebhookEvent event) {
+        return walletRepository.settleGateway(
+                            idempotencyKey,
+                            event.charge_id(),
+                            event.gross(),
+                            event.fee(),
+                            event.net()
+                    );
+    }
     /*
         
         //4. Ledger Entries
@@ -147,16 +127,7 @@ public class WalletService {
 
 
         */
-
-        return new DepositResponse(
-            "d0000000-…-0001",
-            "DEPOSIT",
-            "PENDING",
-            10000,
-            300,
-            10300,
-            "2026-11-20T10:15:00Z");
-    }
+    
 
     public TransactionResponse transactions(String transactionId) {
         //WalletTransaction walletTransaction = walletTransactionRepository

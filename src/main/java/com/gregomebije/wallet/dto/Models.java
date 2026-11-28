@@ -10,6 +10,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 
 public final class Models {
     private Models() {}
@@ -70,18 +72,26 @@ public final class Models {
                 @NotBlank String currency,
                 @NotBlank String cardToken) {}
 
-
-
     public record DepositResponse (
-            String transactionId, //"d0000000-…-0001"
-            String type, //"DEPOSIT", 
-            String status,  //"PENDING",
-            long amount,   //10000 
-            long fee,      //300, 
-            long totalCharged,  //10300, 
-            String createdAt //"2026-11-20T10:15:00Z" 
+            String idempotencyKey, 
+            String walletId,  
+            String serviceType, 
+            long amount,   
+            long fee,      
+            String serviceStatus,  
+            String createdAt 
     ) {}
    
+   
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record GatewayWebhookEvent(
+            String type,
+            String charge_id,
+            Long gross,   // Nullable: present in settlement.paid, null in charge.captured
+            Long fee,     // Nullable: present in settlement.paid, null in charge.captured
+            Long net      // Nullable: present in settlement.paid, null in charge.captured
+    ) {}
+    
     public record TransactionResponse (
         String transaction_id,  //"d0000000-…-0001", 
         String type,            //"DEPOSIT", 
@@ -121,11 +131,7 @@ public final class Models {
        long held // 1000
     ){}
     
-    public record GatewayRequest (
-        String type,    //charge.captured", 
-        String charge_id   // "d0000000-…-0001"
-    ) {}
-
+    
      public record WalletResponse (
         String wallet_id,   //"a1000000-…-0001", 
         long available,    //8000, 

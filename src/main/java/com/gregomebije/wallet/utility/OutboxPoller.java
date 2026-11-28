@@ -62,7 +62,7 @@ public class OutboxPoller {
                 message.markSent();     // <--- 1. Changes status to SENT
             } catch (Exception ex) {
                 log.warn("Outbox dispatch failed id={} tenant={} target={} path={}: {}",
-                        message.getId(), message.getUserId(), message.getTarget(), message.getPath(), ex.getMessage());
+                        message.getId(),  message.getTarget(), message.getPath(), ex.getMessage());
                 message.markFailed(MAX_ATTEMPTS); //<--- 2. Increments attempts & sets DEAD_LETTER (or keeps PENDING)
             }
         }

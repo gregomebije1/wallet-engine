@@ -143,9 +143,11 @@ public class AuthenticationService {
             .email(request.email())
             .password(passwordEncoder.encode(request.password()))
             .role("USER")
+            .status(Status.PENDING_VERIFICATION)
             .build();
         
-        User savedUser = userRepository.save(user);
+        //Force hibernate to execute INSERT immediately
+        User savedUser = userRepository.saveAndFlush(user);
 
         Wallet wallet = Wallet.builder()
             .user(savedUser).currency("USD").build();

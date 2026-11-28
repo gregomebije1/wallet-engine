@@ -1,5 +1,6 @@
 package com.gregomebije.wallet.model;
 
+import lombok.*;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
@@ -9,16 +10,15 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "inbox")
+@Builder
 public class Inbox {
-    @EmbeddedId
-    private InboxId id;
+    @Id
+    @Column(name = "message_id", nullable = false, unique = true)
+    private UUID messageId;
 
-    @Generated(event = EventType.INSERT)
-    @Column(name = "received_at", nullable = false, insertable = false, updatable = false)
-    private OffsetDateTime receivedAt;
+    //@Generated(event = EventType.INSERT)
+    @Builder.Default
+    @Column(name = "received_at", nullable = false)
+    private OffsetDateTime receivedAt = OffsetDateTime.now();;
 
-    protected Inbox() {}
-    public Inbox(UUID userId, String messageId) {
-        this.id = new InboxId(userId, messageId);
-    }
 }

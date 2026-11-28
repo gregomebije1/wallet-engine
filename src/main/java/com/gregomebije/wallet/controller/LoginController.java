@@ -23,6 +23,7 @@ import com.gregomebije.wallet.service.AuthenticationService;
 public class LoginController {
 	 private final AuthenticationService authenticationService;
 
+
 	public LoginController(
             AuthenticationService authenticationService) {
 
